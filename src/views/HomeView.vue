@@ -1,6 +1,5 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
     <HelloWorld msg="Hello World!"/>
   </div>
 </template>
@@ -16,3 +15,11 @@ import HelloWorld from '@/components/HelloWorld.vue' // @ is an alias to /src
 })
 export default class HomeView extends Vue {}
 </script>
+
+<style scoped>
+/* Add this to HomeView.vue */
+.home {
+  margin-top: 8rem;
+  text-align: center;
+}
+</style>
