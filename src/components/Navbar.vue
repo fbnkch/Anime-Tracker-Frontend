@@ -9,10 +9,9 @@
       </button>
       <div class="nav-menu" :class="{ active: isMenuActive }">
         <ul class="nav-links">
-          <li><a class="active" href="#">Home</a></li>
-          <li><a href="#">Features</a></li>
-          <li><a href="#">Pricing</a></li>
-          <li><a class="disabled" href="#">Disabled</a></li>
+          <router-link class="nav-link" to="/">Home</router-link>
+          <router-link class="nav-link" to="/about">About</router-link>
+          <router-link class="nav-link" to="/persons">Persons</router-link>
         </ul>
       </div>
     </div>

@@ -1,15 +1,15 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div class="persons">
+    <h1>This is an Persons page</h1>
   </div>
 </template>
+<script setup lang="ts">
+</script>
 
 <style scoped>
 /* Add this to HomeView.vue */
-.about {
+.persons {
   margin-top: 8rem;
   text-align: center;
 }
 </style>
-<script setup lang="ts">
-</script>
