@@ -1,12 +1,21 @@
 import { shallowMount } from '@vue/test-utils'
-import HelloWorld from '@/components/HelloWorld.vue'
+import AnimeItem from '@/components/AnimeItem.vue'
 
-describe('HelloWorld.vue', () => {
-  it('renders props.msg when passed', () => {
-    const msg = 'new message'
-    const wrapper = shallowMount(HelloWorld, {
-      props: { msg }
+describe('AnimeItem.vue', () => {
+  it('renders anime title correctly', () => {
+    const anime = {
+      id: 1,
+      title: 'Test Anime',
+      image: 'test-image.jpg',
+      total_episodes: 12,
+      watched_episodes: 5
+    }
+
+    const wrapper = shallowMount(AnimeItem, {
+      props: { anime }
     })
-    expect(wrapper.text()).toMatch(msg)
+
+    expect(wrapper.text()).toContain('Test Anime')
+    expect(wrapper.text()).toContain('5 / 12')
   })
 })
