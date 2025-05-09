@@ -24,27 +24,21 @@
 
     <div class="myanime" v-if="my_anime.length > 0">
       <h2>Meine Anime</h2>
-
-      <div v-for="anime in my_anime_asc" class="anime">
-        <img :src="anime.image" alt=""/>
-        <h3>{{anime.title}}</h3>
-        <div class="flex-1"></div>
-        <span class="episodes">
-          {{anime.watched_episodes}} / {{anime.total_episodes}}
-        </span>
-        <button v-if="anime.total_episodes !== anime.watched_episodes"
-                class="button"
-                @click="increaseEpisode(anime)">+</button>
-        <button v-if="anime.watched_episodes > 0"
-                class="button"
-                @click="decreaseEpisode(anime)">-</button>
-      </div>
+      <AnimeItem
+        v-for="anime in my_anime_asc"
+        :key="anime.id"
+        :anime="anime"
+        @increase="increaseEpisode(anime)"
+        @decrease="decreaseEpisode(anime)"
+        @delete="removeAnime(anime)"
+      />
     </div>
   </main>
 </template>
 
 <script setup>
 import {ref, computed, onMounted} from 'vue'
+import AnimeItem from '@/components/AnimeItem.vue'
 
 const eingabe = ref('')
 const my_anime = ref([])
@@ -84,6 +78,11 @@ const addAnime = anime => {
     watched_episodes: 0
   })
 
+  localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
+}
+
+const removeAnime= anime => {
+  my_anime.value = my_anime.value.filter(a => a.id !== anime.id)
   localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
 }
 
@@ -256,6 +255,10 @@ form input{
 }
 
 .anime .button:first-of-type{
+  margin-right: 1rem;
+}
+
+.anime .button:nth-of-type(2){
   margin-right: 1rem;
 }
 
