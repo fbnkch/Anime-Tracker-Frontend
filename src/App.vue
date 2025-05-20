@@ -43,6 +43,11 @@ import AnimeItem from '@/components/AnimeItem.vue'
 const eingabe = ref('')
 const my_anime = ref([])
 const search_results = ref([])
+const BACKEND_URL = process.env.NODE_ENV === 'production'
+  ? 'https://animetracker-kzuw.onrender.com/api/animes'
+  : 'http://localhost:8080/api/animes';
+
+const USER_ID = '1'
 
 //sortieren in dem neue eingabe mit alten werten verglichen wird
 const my_anime_asc = computed(() => {
@@ -70,34 +75,133 @@ const addAnime = anime => {
   search_results.value = []
   eingabe.value = ''
 
-  my_anime.value.push({
+  const animeToAdd ={
     id: anime.mal_id,
     title: anime.title,
     image: anime.images.jpg.image_url,
     total_episodes: anime.episodes,
     watched_episodes: 0
-  })
+  }
 
-  localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
+  // Backend-Aufruf zum Speichern des Anime
+  fetch(`${BACKEND_URL}/user/${USER_ID}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(animeToAdd)
+  })
+    .then(response => response.json())
+    .then(savedAnime => {
+      // Verwende die Daten aus dem Backend (mit der korrekten ID)
+      my_anime.value.push({
+        id: savedAnime.id, // Verwende die vom Backend generierte ID
+        title: savedAnime.title,
+        image: savedAnime.imageUrl,
+        total_episodes: savedAnime.totalEpisodes,
+        watched_episodes: savedAnime.watchedEpisodes
+      })
+    })
+    .catch(error => {
+      console.error('Fehler beim Speichern des Anime:', error)
+      // Fallback zur localStorage, falls der Backend-Aufruf fehlschlägt
+      my_anime.value.push(animeToAdd)
+      localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
+    })
 }
 
-const removeAnime= anime => {
-  my_anime.value = my_anime.value.filter(a => a.id !== anime.id)
+const removeAnime = anime => {
+  // Backend-Aufruf zum Löschen des Anime
+  fetch(`${BACKEND_URL}/user/${USER_ID}/anime/${anime.id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+    .then(response => {
+      if (response.ok) {
+        // Nur wenn Backend-Löschung erfolgreich war, entferne aus lokalem Array
+        my_anime.value = my_anime.value.filter(a => a.id !== anime.id)
+      } else {
+        console.error('Fehler beim Löschen des Anime. Status:', response.status)
+      }
+    })
+    .catch(error => {
+      console.error('Fehler beim Löschen des Anime:', error)
+    })
+
+  // Aktualisiere local storage
   localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
 }
 
 const increaseEpisode = anime => {
+  // Erhöhen des lokalen Zählers
   anime.watched_episodes++
+
+  // Backend-Aufruf zum Aktualisieren des Anime
+  updateAnimeEpisodes(anime)
+
+  // Aktualisiere local storage
   localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
 }
 
-const decreaseEpisode = anime =>{
-  anime.watched_episodes--
-  localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
+const decreaseEpisode = anime => {
+  // Verringern des lokalen Zählers (nicht unter 0)
+  if (anime.watched_episodes > 0) {
+    anime.watched_episodes--
+
+    // Backend-Aufruf zum Aktualisieren des Anime
+    updateAnimeEpisodes(anime)
+
+    // Aktualisiere local storage
+    localStorage.setItem('my_anime', JSON.stringify(my_anime.value))
+  }
 }
 
-onMounted(() =>{
-  my_anime.value = JSON.parse(localStorage.getItem('my_anime')) || []
+// Hilsfunktion zum Aktualisieren der watched_episodes
+const updateAnimeEpisodes = (anime) => {
+  fetch(`${BACKEND_URL}/user/${USER_ID}/anime/${anime.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: anime.id,
+      title: anime.title,
+      image: anime.image,
+      total_episodes: anime.total_episodes,
+      watched_episodes: anime.watched_episodes
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      console.error('Fehler beim Aktualisieren der Episoden. Status:', response.status)
+    }
+  })
+  .catch(error => {
+    console.error('Fehler beim Aktualisieren der Episoden:', error)
+  })
+}
+
+onMounted(() => {
+  // Versuchen Sie, die Anime vom Backend zu laden
+  fetch(`${BACKEND_URL}/user/${USER_ID}`)
+    .then(response => response.json())
+    .then(data => {
+      // Konvertieren der Backend-Daten in das Frontend-Format
+      my_anime.value = data.map(anime => ({
+        id: anime.id,
+        title: anime.title,
+        image: anime.imageUrl,  // Backend sendet imageUrl, Frontend erwartet image
+        total_episodes: anime.totalEpisodes,
+        watched_episodes: anime.watchedEpisodes
+      }))
+    })
+    .catch(error => {
+      console.error('Fehler beim Laden der Anime vom Backend:', error)
+      // Fallback zur localStorage, falls der Backend-Aufruf fehlschlägt
+      my_anime.value = JSON.parse(localStorage.getItem('my_anime')) || []
+    })
 })
 </script>
 
