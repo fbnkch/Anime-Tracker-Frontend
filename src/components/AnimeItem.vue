@@ -8,6 +8,15 @@
           {{anime.watched_episodes}} / {{anime.total_episodes}}
         </span>
         <div class="button-group">
+          <button v-if="anime.watched_episodes > 0"
+                  class="button"
+                  @click="$emit('decrease')"
+                  @mousedown="startRepeating('decrease')"
+                  @mouseup="stopRepeating"
+                  @mouseleave="stopRepeating"
+                  @touchstart.prevent="startRepeating('decrease')"
+                  @touchend="stopRepeating"
+                  @touchcancel="stopRepeating">-</button>
           <button v-if="anime.total_episodes !== anime.watched_episodes"
               class="button"
               @click="$emit('increase')"
@@ -17,15 +26,6 @@
               @touchstart.prevent="startRepeating('increase')"
               @touchend="stopRepeating"
               @touchcancel="stopRepeating">+</button>
-          <button v-if="anime.watched_episodes > 0"
-              class="button"
-              @click="$emit('decrease')"
-              @mousedown="startRepeating('decrease')"
-              @mouseup="stopRepeating"
-              @mouseleave="stopRepeating"
-              @touchstart.prevent="startRepeating('decrease')"
-              @touchend="stopRepeating"
-              @touchcancel="stopRepeating">-</button>
           <button class="button delete-button" @click="$emit('delete')">x</button>
         </div>
       </div>
@@ -49,16 +49,51 @@ const emit = defineEmits(['increase', 'decrease', 'delete']);
 const repeatTimer = ref(null);
 const repeatDelay = ref(null);
 
+// Überprüft, ob eine Episode hinzugefügt werden kann
+const increaseEpisode = () => {
+  if (props.anime.watched_episodes < props.anime.total_episodes) {
+    emit('increase');
+  }
+};
+
+// Überprüft, ob eine Episode entfernt werden kann
+const decreaseEpisode = () => {
+  if (props.anime.watched_episodes > 0) {
+    emit('decrease');
+  }
+};
+
 // Startet das wiederholte Auslösen von Events beim Gedrückthalten
 const startRepeating = (action) => {
-  // Erstes Event sofort auslösen
-  emit(action);
+  if (action === 'increase' && props.anime.watched_episodes >= props.anime.total_episodes) {
+    return; // Wenn Maximum erreicht, keine Aktion starten
+  }
+
+  if (action === 'decrease' && props.anime.watched_episodes <= 0) {
+    return; // Wenn Minimum erreicht, keine Aktion starten
+  }
+
+  // Erstes Event nur auslösen, wenn es zulässig ist
+  action === 'increase' ? increaseEpisode() : decreaseEpisode();
 
   // Nach einer kurzen Verzögerung beginnen, regelmäßig Events auszulösen
   repeatDelay.value = setTimeout(() => {
     repeatTimer.value = setInterval(() => {
-      emit(action);
-    }, 100); // Alle 100ms ein Event auslösen
+      // Bei jedem Intervall prüfen, ob die Aktion noch zulässig ist
+      if (action === 'increase') {
+        if (props.anime.watched_episodes < props.anime.total_episodes) {
+          emit('increase');
+        } else {
+          stopRepeating(); // Stoppen, wenn Maximum erreicht
+        }
+      } else if (action === 'decrease') {
+        if (props.anime.watched_episodes > 0) {
+          emit('decrease');
+        } else {
+          stopRepeating(); // Stoppen, wenn Minimum erreicht
+        }
+      }
+    }, 70); // Alle 70ms ein Event auslösen
   }, 500); // Nach 500ms mit dem schnellen Wiederholen beginnen
 };
 
