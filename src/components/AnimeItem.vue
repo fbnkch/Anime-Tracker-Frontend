@@ -10,16 +10,70 @@
         <div class="button-group">
           <button v-if="anime.total_episodes !== anime.watched_episodes"
               class="button"
-              @click="$emit('increase')">+</button>
+              @click="$emit('increase')"
+              @mousedown="startRepeating('increase')"
+              @mouseup="stopRepeating"
+              @mouseleave="stopRepeating"
+              @touchstart.prevent="startRepeating('increase')"
+              @touchend="stopRepeating"
+              @touchcancel="stopRepeating">+</button>
           <button v-if="anime.watched_episodes > 0"
               class="button"
-              @click="$emit('decrease')">-</button>
+              @click="$emit('decrease')"
+              @mousedown="startRepeating('decrease')"
+              @mouseup="stopRepeating"
+              @mouseleave="stopRepeating"
+              @touchstart.prevent="startRepeating('decrease')"
+              @touchend="stopRepeating"
+              @touchcancel="stopRepeating">-</button>
           <button class="button delete-button" @click="$emit('delete')">x</button>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue';
+
+const props = defineProps({
+  anime: {
+    type: Object,
+    required: true
+  }
+});
+
+const emit = defineEmits(['increase', 'decrease', 'delete']);
+
+// Timer-Variablen für das Gedrückthalten
+const repeatTimer = ref(null);
+const repeatDelay = ref(null);
+
+// Startet das wiederholte Auslösen von Events beim Gedrückthalten
+const startRepeating = (action) => {
+  // Erstes Event sofort auslösen
+  emit(action);
+
+  // Nach einer kurzen Verzögerung beginnen, regelmäßig Events auszulösen
+  repeatDelay.value = setTimeout(() => {
+    repeatTimer.value = setInterval(() => {
+      emit(action);
+    }, 100); // Alle 100ms ein Event auslösen
+  }, 500); // Nach 500ms mit dem schnellen Wiederholen beginnen
+};
+
+// Stoppt das wiederholte Auslösen beim Loslassen
+const stopRepeating = () => {
+  if (repeatDelay.value) {
+    clearTimeout(repeatDelay.value);
+    repeatDelay.value = null;
+  }
+  if (repeatTimer.value) {
+    clearInterval(repeatTimer.value);
+    repeatTimer.value = null;
+  }
+};
+</script>
 
 <style scoped>
 .anime {
@@ -92,12 +146,3 @@
   background-image: linear-gradient(to right, #ff5252 50%, #d32f2f 50%);
 }
 </style>
-
-<script setup>
-defineProps({
-  anime: {
-    type: Object,
-    required: true
-  }
-})
-</script>
