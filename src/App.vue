@@ -59,6 +59,7 @@
 import {ref, computed, onMounted} from 'vue'
 import AnimeItem from '@/components/AnimeItem.vue'
 import AuthForm from '@/components/AuthForm.vue'
+import { authFetch } from '@/utils/authFetch.ts'
 
 const eingabe = ref('')
 const my_anime = ref([])
@@ -139,7 +140,7 @@ const logout = () => {
 const loadUserAnime = () => {
   if (!currentUser.value) return
 
-  fetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}`)
+  authFetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}`)
     .then(response => response.json())
     .then(data => {
       my_anime.value = data.map(anime => ({
@@ -158,7 +159,7 @@ const loadUserAnime = () => {
 }
 
 const loadUserFavorites = () => {
-  fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}`)
+  authFetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}`)
     .then(res => res.json())
     .then(data => {
       userFavorites.value = data.map(fav => fav.animeId)
@@ -172,14 +173,14 @@ const loadUserFavorites = () => {
 const toggleFavorite = anime => {
   if (!anime.is_favorite) {
     // Favorit hinzufügen
-    fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
+    authFetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
       method: 'POST'
     }).then(() => {
       anime.is_favorite = true
     })
   } else {
     // Favorit entfernen
-    fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
+    authFetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
       method: 'DELETE'
     }).then(() => {
       anime.is_favorite = false
@@ -222,7 +223,7 @@ const addAnime = anime => {
   }
 
   // Backend-Aufruf zum Speichern des Anime
-  fetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}`, {
+  authFetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -247,7 +248,7 @@ const addAnime = anime => {
 
 const removeAnime = anime => {
   // Backend-Aufruf zum Löschen des Anime
-  fetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}/anime/${anime.id}`, {
+  authFetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}/anime/${anime.id}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -283,7 +284,7 @@ const decreaseEpisode = anime => {
 
 // Hilsfunktion zum Aktualisieren der watched_episodes
 const updateAnimeEpisodes = (anime) => {
-  fetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}/anime/${anime.id}`, {
+  authFetch(`${BACKEND_URL}/animes/user/${currentUser.value.id}/anime/${anime.id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

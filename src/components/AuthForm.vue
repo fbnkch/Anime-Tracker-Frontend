@@ -1,4 +1,4 @@
-<!-- src/components/AuthForm.vue -->
+
 <template>
   <div class="auth-container">
     <div class="auth-card">
