@@ -8,6 +8,7 @@
     "build": "vue-cli-service build --no-eslint",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint"
+    "test": "npm run test:unit"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
