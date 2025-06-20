@@ -8,6 +8,12 @@
           {{anime.watched_episodes}} / {{anime.total_episodes}}
         </span>
         <div class="button-group">
+          <button
+            class="button favorite-button"
+            :class="{ active: anime.is_favorite }"
+            @click="$emit('toggle-favorite')">
+            ★
+          </button>
           <button v-if="anime.watched_episodes > 0"
                   class="button"
                   @click="$emit('decrease')"
@@ -43,7 +49,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['increase', 'decrease', 'delete']);
+const emit = defineEmits(['increase', 'decrease', 'delete', 'toggle-favorite']);
 
 // Timer-Variablen für das Gedrückthalten
 const repeatTimer = ref(null);

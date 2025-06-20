@@ -45,6 +45,7 @@
           @increase="increaseEpisode(anime)"
           @decrease="decreaseEpisode(anime)"
           @delete="removeAnime(anime)"
+          @toggle-favorite="toggleFavorite(anime)"
         />
       </div>
     </div>
@@ -63,6 +64,7 @@ const eingabe = ref('')
 const my_anime = ref([])
 const search_results = ref([])
 const currentUser = ref(null)
+const userFavorites = ref([])
 const BACKEND_URL = process.env.NODE_ENV === 'production'
   ? 'https://animetracker-kzuw.onrender.com/api'
   : 'http://localhost:8080/api';
@@ -145,12 +147,44 @@ const loadUserAnime = () => {
         title: anime.title,
         image: anime.imageUrl,
         total_episodes: anime.totalEpisodes,
-        watched_episodes: anime.watchedEpisodes
+        watched_episodes: anime.watchedEpisodes,
+        is_favorite: false
       }))
+      loadUserFavorites()
     })
     .catch(error => {
       console.error('Fehler beim Laden der Anime vom Backend:', error)
     })
+}
+
+const loadUserFavorites = () => {
+  fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}`)
+    .then(res => res.json())
+    .then(data => {
+      userFavorites.value = data.map(fav => fav.animeId)
+      // Anime-Liste aktualisieren
+      my_anime.value.forEach(anime => {
+        anime.is_favorite = userFavorites.value.includes(anime.id)
+      })
+    })
+}
+
+const toggleFavorite = anime => {
+  if (!anime.is_favorite) {
+    // Favorit hinzufügen
+    fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
+      method: 'POST'
+    }).then(() => {
+      anime.is_favorite = true
+    })
+  } else {
+    // Favorit entfernen
+    fetch(`${BACKEND_URL}/favorites/user/${currentUser.value.id}/anime/${anime.id}`, {
+      method: 'DELETE'
+    }).then(() => {
+      anime.is_favorite = false
+    })
+  }
 }
 
 //sortieren in dem neue eingabe mit alten werten verglichen wird
