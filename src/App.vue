@@ -191,9 +191,12 @@ const toggleFavorite = anime => {
 //sortieren in dem neue eingabe mit alten werten verglichen wird
 const my_anime_asc = computed(() => {
   return my_anime.value.sort((a, b) => {
-    return a.title.localeCompare(b.title)
-  })
-})
+    if(a.is_favorite && !b.is_favorite) return -1;
+    if(!a.is_favorite && b.is_favorite) return 1;
+
+    return a.title.localeCompare(b.title);
+  });
+});
 
 const searchAnime = () => {
   const url = `https://api.jikan.moe/v4/anime?q=${eingabe.value}`
