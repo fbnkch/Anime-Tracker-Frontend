@@ -14,28 +14,31 @@
           <button
             class="button favorite-button"
             :class="{ active: anime.is_favorite }"
-            @click="$emit('toggle-favorite')">
+            @click="handleFavoriteClick">
             ★
           </button>
           <button v-if="anime.watched_episodes > 0"
                   class="button"
-                  @click="$emit('decrease')"
-                  @mousedown="startRepeating('decrease')"
-                  @mouseup="stopRepeating"
-                  @mouseleave="stopRepeating"
-                  @touchstart.prevent="startRepeating('decrease')"
-                  @touchend="stopRepeating"
-                  @touchcancel="stopRepeating">-</button>
+                  :disabled="isDebouncing"
+                  @click="handleDecrease"
+                  @mousedown="startLongPress('decrease')"
+                  @mouseup="stopLongPress"
+                  @mouseleave="stopLongPress"
+                  @touchstart.prevent="startLongPress('decrease')"
+                  @touchend="stopLongPress"
+                  @touchcancel="stopLongPress">-</button>
           <button v-if="anime.total_episodes !== anime.watched_episodes"
-              class="button"
-              @click="$emit('increase')"
-              @mousedown="startRepeating('increase')"
-              @mouseup="stopRepeating"
-              @mouseleave="stopRepeating"
-              @touchstart.prevent="startRepeating('increase')"
-              @touchend="stopRepeating"
-              @touchcancel="stopRepeating">+</button>
-          <button class="button delete-button" @click="$emit('delete')">x</button>
+                  class="button"
+                  :disabled="isDebouncing"
+                  @click="handleIncrease"
+                  @mousedown="startLongPress('increase')"
+                  @mouseup="stopLongPress"
+                  @mouseleave="stopLongPress"
+                  @touchstart.prevent="startLongPress('increase')"
+                  @touchend="stopLongPress"
+                  @touchcancel="stopLongPress">+</button>
+          <button class="button delete-button"
+                  @click="$emit('delete')">x</button>
         </div>
       </div>
     </div>
@@ -54,67 +57,79 @@ const props = defineProps({
 
 const emit = defineEmits(['increase', 'decrease', 'delete', 'toggle-favorite']);
 
-// Timer-Variablen für das Gedrückthalten
-const repeatTimer = ref(null);
-const repeatDelay = ref(null);
+//Debounce-Status und Timer-IDs
+const isDebouncing = ref(false)
+const longPressTimer = ref(null)
+const repeatTimer = ref(null)
+const longPressDelay = 500
+const repeatDelay = 100
+const debounceDelay = 300
 
-// Überprüft, ob eine Episode hinzugefügt werden kann
-const increaseEpisode = () => {
-  if (props.anime.watched_episodes < props.anime.total_episodes) {
-    emit('increase');
+const handleIncrease = () => {
+  if (isDebouncing.value) return
+  isDebouncing.value = true
+  emit('increase')
+
+  setTimeout(() => {
+    isDebouncing.value = false
+  }, debounceDelay)
+}
+
+const handleDecrease = () => {
+  if (isDebouncing.value) return
+  isDebouncing.value = true
+  emit('decrease')
+
+  setTimeout(() => {
+    isDebouncing.value = false
+  }, debounceDelay)
+}
+
+const handleFavoriteClick = () => {
+  if (isDebouncing.value) return
+  isDebouncing.value = true
+  emit('toggle-favorite')
+
+  setTimeout(() => {
+    isDebouncing.value = false
+  }, debounceDelay)
+}
+
+// Funktionen für langes Drücken und Wiederholung
+const startLongPress = (action) => {
+  // Bestehende Timer löschen
+  stopLongPress()
+
+  // Timer für langes Drücken starten
+  longPressTimer.value = setTimeout(() => {
+    // Erst nach Verzögerung mit Wiederholung beginnen
+    repeatAction(action)
+  }, longPressDelay)
+}
+
+const repeatAction = (action) => {
+  if (action === 'increase') {
+    emit('increase')
+  } else if (action === 'decrease') {
+    emit('decrease')
   }
-};
 
-// Überprüft, ob eine Episode entfernt werden kann
-const decreaseEpisode = () => {
-  if (props.anime.watched_episodes > 0) {
-    emit('decrease');
-  }
-};
+  // Regelmäßige Wiederholung einrichten
+  repeatTimer.value = setTimeout(() => {
+    repeatAction(action)
+  }, repeatDelay)
+}
 
-// Startet das wiederholte Auslösen von Events beim Gedrückthalten
-const startRepeating = (action) => {
-  if (action === 'increase' && props.anime.watched_episodes >= props.anime.total_episodes) {
-    return; // Wenn Maximum erreicht, keine Aktion starten
-  }
-
-  if (action === 'decrease' && props.anime.watched_episodes <= 0) {
-    return; // Wenn Minimum erreicht, keine Aktion starten
+const stopLongPress = () => {
+  // Alle Timer aufräumen
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
   }
 
-  // Erstes Event nur auslösen, wenn es zulässig ist
-  action === 'increase' ? increaseEpisode() : decreaseEpisode();
-
-  // Nach einer kurzen Verzögerung beginnen, regelmäßig Events auszulösen
-  repeatDelay.value = setTimeout(() => {
-    repeatTimer.value = setInterval(() => {
-      // Bei jedem Intervall prüfen, ob die Aktion noch zulässig ist
-      if (action === 'increase') {
-        if (props.anime.watched_episodes < props.anime.total_episodes) {
-          emit('increase');
-        } else {
-          stopRepeating(); // Stoppen, wenn Maximum erreicht
-        }
-      } else if (action === 'decrease') {
-        if (props.anime.watched_episodes > 0) {
-          emit('decrease');
-        } else {
-          stopRepeating(); // Stoppen, wenn Minimum erreicht
-        }
-      }
-    }, 70); // Alle 70ms ein Event auslösen
-  }, 500); // Nach 500ms mit dem schnellen Wiederholen beginnen
-};
-
-// Stoppt das wiederholte Auslösen beim Loslassen
-const stopRepeating = () => {
-  if (repeatDelay.value) {
-    clearTimeout(repeatDelay.value);
-    repeatDelay.value = null;
-  }
   if (repeatTimer.value) {
-    clearInterval(repeatTimer.value);
-    repeatTimer.value = null;
+    clearTimeout(repeatTimer.value)
+    repeatTimer.value = null
   }
 };
 </script>
