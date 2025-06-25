@@ -2,7 +2,10 @@
   <div class="anime">
     <img :src="anime.image" alt=""/>
     <div class="anime-content">
-      <h3>{{anime.title}}</h3>
+      <h3>
+      {{anime.title}}
+      <span class="title-favorite" v-if="anime.is_favorite">★</span>
+      </h3>
       <div class="anime-controls">
         <span class="episodes">
           {{anime.watched_episodes}} / {{anime.total_episodes}}
@@ -185,5 +188,20 @@ const stopRepeating = () => {
 
 .delete-button {
   background-image: linear-gradient(to right, #ff5252 50%, #d32f2f 50%);
+}
+
+.favorite-button {
+  color: #ccc;
+  transition: color 0.3s, transform 0.3s;
+  font-size: 1.2rem;
+}
+
+.favorite-button.active {
+  color: gold;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+}
+
+.favorite-button:hover {
+  transform: scale(1.2);
 }
 </style>
